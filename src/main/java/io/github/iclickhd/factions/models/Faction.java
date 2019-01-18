@@ -6,20 +6,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.text.Text;
+
 public class Faction extends AbstractModel {
 	private UUID uniqueId;
 	private String name;
 	private List<FactionMember> members;
 	private Set<String> alliances;
 	private Set<String> enemies;
-	private Set<FactionClaim> claims;
+	private List<FactionClaim> claims;
 	
 	public Faction(UUID uniqueId, String name) {
 		this.uniqueId = uniqueId;
 		this.name = name;
-		members = new ArrayList<FactionMember>();
-		alliances = new HashSet<String>();
-		enemies = new HashSet<String>();
+		this.members = new ArrayList<FactionMember>();
+		this.alliances = new HashSet<String>();
+		this.enemies = new HashSet<String>();
+		this.claims = new ArrayList<FactionClaim>();
 	}
 	
 	public UUID getUniqueId() {
@@ -58,11 +62,24 @@ public class Faction extends AbstractModel {
 		this.enemies = enemies;
 	}
 
-	public Set<FactionClaim> getClaims() {
+	public List<FactionClaim> getClaims() {
 		return claims;
 	}
 
-	public void setClaims(Set<FactionClaim> claims) {
+	public void setClaims(List<FactionClaim> claims) {
 		this.claims = claims;
+	}
+	
+	public void addClaim(FactionClaim claim) {
+		Sponge.getServer().getConsole().sendMessage(Text.EMPTY);
+		Sponge.getServer().getConsole().sendMessage(Text.of(claim.getWorld().getName()));
+		Sponge.getServer().getConsole().sendMessage(Text.of(claim.getLocation().toString()));
+		Sponge.getServer().getConsole().sendMessage(Text.of(this.claims.size()));
+		
+		this.claims.add(claim);
+	}
+
+	public void removeClaim(FactionClaim claim) {
+		this.claims.remove(claim);
 	}
 }

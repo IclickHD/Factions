@@ -22,10 +22,12 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
+import com.flowpowered.math.vector.Vector3i;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
 import io.github.iclickhd.factions.caching.FactionsCache;
+import io.github.iclickhd.factions.commands.ClaimCommand;
 import io.github.iclickhd.factions.commands.CreateCommand;
 import io.github.iclickhd.factions.commands.FactionHelpCommand;
 import io.github.iclickhd.factions.commands.FactionInfoCommand;
@@ -39,10 +41,13 @@ import io.github.iclickhd.factions.listeners.PlayerMoveListener;
 import io.github.iclickhd.factions.logic.FactionLogic;
 import io.github.iclickhd.factions.logic.MainLogic;
 import io.github.iclickhd.factions.models.Faction;
+import io.github.iclickhd.factions.models.FactionClaim;
 import io.github.iclickhd.factions.models.FactionMember;
 import io.github.iclickhd.factions.parsers.FactionNameArgument;
+import io.github.iclickhd.factions.serializers.FactionClaimSerializer;
 import io.github.iclickhd.factions.serializers.FactionMemberSerializer;
 import io.github.iclickhd.factions.serializers.FactionSerializer;
+import io.github.iclickhd.factions.serializers.Vector3iSerializer;
 import io.github.iclickhd.factions.statictext.CommandArgumentKeys;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
 
@@ -112,6 +117,8 @@ public class FactionsPlugin {
 		
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(Faction.class), new FactionSerializer());
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FactionMember.class), new FactionMemberSerializer());
+		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FactionClaim.class), new FactionClaimSerializer());
+		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(Vector3i.class), new Vector3iSerializer());
 		
 		SetupConfigs();
 
@@ -179,6 +186,11 @@ public class FactionsPlugin {
 		factionCommands.put(Collections.singletonList("demote"), CommandSpec.builder()
 				.description(Text.of("Demote a player"))
 				.executor(new FactionRankDemote())
+				.build());
+		
+		factionCommands.put(Collections.singletonList("claim"), CommandSpec.builder()
+				.description(Text.of("Claim a land"))
+				.executor(new ClaimCommand())
 				.build());
 		
         CommandSpec commandNation = CommandSpec.builder()

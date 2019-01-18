@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.world.World;
 
@@ -80,7 +81,7 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 	
 	public Optional<Faction> getFaction(UUID factionUniqueId) {
 		for(Faction faction : getFactions()) {
-			if(faction.getUniqueId() == factionUniqueId)
+			if(faction.getUniqueId().equals(factionUniqueId))
 				return Optional.of(faction);
 		}
 		return Optional.empty();
@@ -97,11 +98,15 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 	public Optional<Faction> getFactionByPlayerUUID(UUID playerUUID) {
 		for(Faction faction : getFactions()) {
 			for(FactionMember factionMember : faction.getMembers()) {
-				if(factionMember.getUniqueId() == playerUUID)
+				if(factionMember.getUniqueId().equals(playerUUID))
 					return Optional.of(faction);
 			}
 		}
 		return Optional.empty();
+	}
+	
+	public Optional<Faction> getFactionByPlayer(Player player) {
+		return getFactionByPlayerUUID(player.getUniqueId());
 	}
 	
 	public Optional<Faction> getFactionByClaim(World world, Vector3i location) {
@@ -112,5 +117,10 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 			}
 		}
 		return Optional.empty();
+	}
+	
+	public void claimChunk(Faction faction, World world, Vector3i location) {
+		faction.addClaim(new FactionClaim(world, location));
+		addOrUpdate(faction);
 	}
 }

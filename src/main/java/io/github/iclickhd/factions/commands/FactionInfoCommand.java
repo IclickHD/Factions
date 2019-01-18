@@ -39,7 +39,7 @@ public class FactionInfoCommand extends AbstractCommand {
 			if (source instanceof Player) {
 				Player player = (Player) source;
 				Optional<Faction> faction = getPlugin().getFactionLogic().getFactionByPlayerUUID(player.getUniqueId());
-
+				
 				if (faction.isPresent()) {
 					ShowFactionInfo(source, faction.get());
 				} else {
@@ -47,6 +47,8 @@ public class FactionInfoCommand extends AbstractCommand {
 				}
 			}
 		}
+
+		
 		return CommandResult.success();
 	}
 

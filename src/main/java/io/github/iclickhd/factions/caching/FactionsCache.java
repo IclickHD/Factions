@@ -8,7 +8,7 @@ import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.objects.AbstractPluginObject;
 
 public class FactionsCache extends AbstractPluginObject {
-	public static Map<UUID, Faction> factionsCache = new HashMap<UUID, Faction>();
+	private static Map<UUID, Faction> factionsCache = new HashMap<UUID, Faction>();
 
 	public Map<UUID, Faction> getCache() {
 		return factionsCache;

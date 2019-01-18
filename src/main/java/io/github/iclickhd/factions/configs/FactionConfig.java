@@ -3,12 +3,10 @@ package io.github.iclickhd.factions.configs;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.reflect.TypeToken;
 
-import io.github.iclickhd.factions.caching.FactionsCache;
 import io.github.iclickhd.factions.models.Faction;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
@@ -47,12 +45,10 @@ public class FactionConfig extends AbstractCacheableConfig {
 	
 	public void fillCache() {
 		Map<UUID, Faction> factionsMap = new HashMap<UUID, Faction>();
-
+		
 		if (get().getNode("factions").getValue() != null) 
 		{
-			Set<Object> objectList = get().getNode("factions").getChildrenMap().keySet();
-
-			for (Object object : objectList) 
+			for (Object object : get().getNode("factions").getChildrenMap().keySet()) 
 			{
 				String factionUniqueId = String.valueOf(object);
 				try 
@@ -67,6 +63,6 @@ public class FactionConfig extends AbstractCacheableConfig {
 			}
 		}
 
-		FactionsCache.factionsCache = factionsMap;
+		getPlugin().getFactionsCache().setFactionsCache(factionsMap);
 	}
 }

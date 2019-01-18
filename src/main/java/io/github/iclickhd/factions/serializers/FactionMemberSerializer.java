@@ -19,6 +19,5 @@ public class FactionMemberSerializer implements TypeSerializer<FactionMember> {
 	@Override
 	public void serialize(TypeToken<?> type, FactionMember obj, ConfigurationNode value) throws ObjectMappingException {
 		value.getNode("uuid").setValue(TypeToken.of(UUID.class), obj.getUniqueId());
-		value.getNode("name").setValue("Test");
 	}
 }
