@@ -1,10 +1,12 @@
 package io.github.iclickhd.factions.serializers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.google.common.reflect.TypeToken;
 
+import io.github.iclickhd.factions.configs.ConfigHelper;
 import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.models.FactionClaim;
 import io.github.iclickhd.factions.models.FactionMember;
@@ -17,15 +19,16 @@ public class FactionSerializer implements TypeSerializer<Faction> {
 	public Faction deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException {
 		String factionIdStr = (String) value.getKey();
 		Faction faction = new Faction(UUID.fromString(factionIdStr), value.getNode("name").getString());
-		List<FactionClaim> factionClaims = value.getNode("claims").getList(TypeToken.of(FactionClaim.class));
-		List<FactionMember> factionMembers = value.getNode("members").getList(TypeToken.of(FactionMember.class));
 		
-		if(factionClaims != null && factionClaims.size() > 0) {
-			faction.setClaims(factionClaims);
+		Optional<List<FactionMember>> optionalFactionMembers = ConfigHelper.getOptionalList(value.getNode("members"), TypeToken.of(FactionMember.class));
+		Optional<List<FactionClaim>> optionalFactionClaims = ConfigHelper.getOptionalList(value.getNode("claims"), TypeToken.of(FactionClaim.class));
+		
+		if(optionalFactionMembers.isPresent()) {
+			faction.setMembers(optionalFactionMembers.get());
 		}
 		
-		if(factionMembers != null && factionMembers.size() > 0) {
-			faction.setMembers(factionMembers);
+		if(optionalFactionClaims.isPresent()) {
+			faction.setClaims(optionalFactionClaims.get());
 		}
 		
 		return faction;

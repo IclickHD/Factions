@@ -3,7 +3,7 @@ plugins {
 }
 
 group = pluginGroup
-version = pluginVersion
+version = minecraftVersion + '-v' + pluginVersion
 description = 'A plugin to create factions, claim land and fight other factions'
 
 dependencies {
