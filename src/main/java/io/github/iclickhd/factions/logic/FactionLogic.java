@@ -89,7 +89,7 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 	
 	public Optional<Faction> getFaction(String factionName) {
 		for(Faction faction : getFactions()) {
-			if(faction.getName().toLowerCase().trim() == factionName.toLowerCase().trim())
+			if(faction.getName().toLowerCase().trim().equals(factionName.toLowerCase().trim()))
 				return Optional.of(faction);
 		}
 		return Optional.empty();

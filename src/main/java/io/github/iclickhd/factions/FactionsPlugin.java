@@ -174,7 +174,7 @@ public class FactionsPlugin {
 		factionCommands.put(Arrays.asList("p", "player"), CommandSpec.builder()
 				.description(Text.of("Display the player information"))
 				.permission("")
-				.arguments(GenericArguments.optional(GenericArguments.user(Text.of(CommandArgumentKeys.PLAYER_NAME_COMMAND_ARGUMENT))), GenericArguments.optional(GenericArguments.string(Text.of("test arguments"))))
+				.arguments(GenericArguments.optional(GenericArguments.user(Text.of(CommandArgumentKeys.PLAYER_NAME_COMMAND_ARGUMENT))))
 				.executor(new PlayerInfoCommand())
 				.build());
 		

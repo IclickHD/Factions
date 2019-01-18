@@ -5,9 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -23,6 +21,7 @@ import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.models.FactionMember;
 import io.github.iclickhd.factions.services.UserService;
 import io.github.iclickhd.factions.statictext.CommandArgumentKeys;
+import io.github.iclickhd.factions.utils.TextUtils;
 
 public class FactionInfoCommand extends AbstractCommand {
 	@Override
@@ -53,26 +52,23 @@ public class FactionInfoCommand extends AbstractCommand {
 	}
 
 	public void ShowFactionInfo(MessageReceiver source, Faction faction) {
-		PaginationList.Builder builder = PaginationList.builder();
-		Set<String> onlineMembersName = new HashSet<String>();
-		Set<String> offlineMembersName = new HashSet<String>();
+		Set<Text> onlineMembersName = new HashSet<Text>();
+		Set<Text> offlineMembersName = new HashSet<Text>();
 		for (FactionMember factionMember : faction.getMembers()) {
 			Optional<User> optionalUser = UserService.getUser(factionMember.getUniqueId());
 			if (optionalUser.isPresent()) {
 				User user = optionalUser.get();
 				if (UserService.isUserOnline(user)) {
-					onlineMembersName.add(user.getName());
+					onlineMembersName.add(Text.of(user.getName()));
 				} else {
-					offlineMembersName.add(user.getName());
+					offlineMembersName.add(Text.of(user.getName()));
 				}
 			}
 		}
 
 		List<Text> contents = new ArrayList<Text>();
-		contents.add(Text.of("Membres connectés (" + onlineMembersName.size() + ") : "
-				+ onlineMembersName.stream().collect(Collectors.joining(", "))));
-		contents.add(Text.of("Membres deconnectés (" + offlineMembersName.size() + ") : "
-				+ StringUtils.join(offlineMembersName, ", ")));
-		builder.title(Text.of(TextColors.GOLD, TextColors.DARK_GREEN, faction.getName(), TextColors.GOLD)).contents(contents).padding(Text.of("=")).sendTo(source);
+		contents.add(Text.builder().append(Text.of("Online members (" + onlineMembersName.size() + ") : ")).append(TextUtils.join(onlineMembersName, Text.of(", "))).build());
+		contents.add(Text.builder().append(Text.of("Offline members (" + offlineMembersName.size() + ") : ")).append(TextUtils.join(offlineMembersName, Text.of(", "))).build());
+		PaginationList.builder().title(Text.of(TextColors.GOLD, TextColors.DARK_GREEN, faction.getName(), TextColors.GOLD)).contents(contents).padding(Text.of("=")).sendTo(source);
 	}
 }
