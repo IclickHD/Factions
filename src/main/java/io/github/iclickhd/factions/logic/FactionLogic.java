@@ -1,5 +1,6 @@
 package io.github.iclickhd.factions.logic;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -16,7 +17,6 @@ import io.github.iclickhd.factions.FactionsPlugin;
 import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.models.FactionClaim;
 import io.github.iclickhd.factions.models.FactionMember;
-import io.github.iclickhd.factions.services.UserService;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 public class FactionLogic extends AbstractLogic implements ICacheableLogic<Faction> {	
@@ -68,7 +68,7 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 			Set<FactionMember> factionMembers = new HashSet<FactionMember>();
 			
 			for(FactionMember factionMember : faction.getMembers()) {
-				if(UserService.isUserOnline(factionMember.getUniqueId())) {
+				if(getPlugin().getUserManager().isUserOnline(factionMember.getUniqueId())) {
 					factionMembers.add(factionMember);
 				}
 			}
@@ -119,8 +119,49 @@ public class FactionLogic extends AbstractLogic implements ICacheableLogic<Facti
 		return Optional.empty();
 	}
 	
+	public BigDecimal getFactionPower(UUID factionUUID) {
+		BigDecimal power = BigDecimal.ZERO;
+		Optional<Faction> optionalFaction = getFaction(factionUUID);
+		if(optionalFaction.isPresent()) {
+			Faction faction = optionalFaction.get();
+			
+			for(FactionMember factionMember : faction.getMembers()) {
+				power = power.add(getPlugin().getPowerManager().getPower(factionMember.getUniqueId()));
+			}
+		}
+		return power;
+	}
+	
+	public BigDecimal getFactionMaxPower(UUID factionUUID) {
+		BigDecimal power = BigDecimal.ZERO;
+		Optional<Faction> optionalFaction = getFaction(factionUUID);
+		if(optionalFaction.isPresent()) {
+			Faction faction = optionalFaction.get();
+			for(FactionMember factionMember : faction.getMembers()) {
+				power = power.add(getPlugin().getPowerManager().getMaxPower(factionMember.getUniqueId()));
+			}
+		}
+		return power;
+	}
+	
+	public int getFactionRoundedMaxPower(UUID factionUUID) {
+		return getFactionMaxPower(factionUUID).setScale(0, BigDecimal.ROUND_DOWN).intValueExact();
+	}
+	
+	public int getFactionRoundedPower(UUID factionUUID) {
+		return getFactionPower(factionUUID).setScale(0, BigDecimal.ROUND_DOWN).intValueExact();
+	}
+	
 	public void claimChunk(Faction faction, World world, Vector3i location) {
 		faction.addClaim(new FactionClaim(world, location));
 		addOrUpdate(faction);
+	}
+	
+	public boolean canClaim(Faction faction) {
+		return faction.getClaims().size() < getFactionRoundedPower(faction.getUniqueId());
+	}
+	
+	public boolean canOverClaim(Faction faction, Faction chunkFaction) {
+		return canClaim(faction) && chunkFaction.getClaims().size() > getFactionRoundedPower(chunkFaction.getUniqueId());
 	}
 }

@@ -14,10 +14,12 @@ import io.github.iclickhd.factions.models.Faction;
 public class PlayerMoveListener extends AbstractListener {
 	@Listener
 	public void onPlayerMove(MoveEntityEvent event, @Root Player player) {
-		Location<World> playerLocation = player.getLocation();
-		Optional<Faction> optionalChunkFaction = getPlugin().getFactionLogic().getFactionByClaim(player.getWorld(), playerLocation.getChunkPosition());
-		if(optionalChunkFaction.isPresent()) {
-			
-		}
+		Location<World> lastLocation = event.getFromTransform().getLocation();
+        Location<World> newLocation = event.getToTransform().getLocation();
+        
+        if(newLocation.getChunkPosition().equals(lastLocation.getChunkPosition())) {
+    		Optional<Faction> optionalLastLocationFaction = getPlugin().getFactionLogic().getFactionByClaim(player.getWorld(), lastLocation.getChunkPosition());
+    		Optional<Faction> optionalNewLocationFaction = getPlugin().getFactionLogic().getFactionByClaim(player.getWorld(), newLocation.getChunkPosition());
+        }
 	}
 }

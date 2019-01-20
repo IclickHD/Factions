@@ -19,7 +19,6 @@ import org.spongepowered.api.text.format.TextColors;
 
 import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.models.FactionMember;
-import io.github.iclickhd.factions.services.UserService;
 import io.github.iclickhd.factions.statictext.CommandArgumentKeys;
 import io.github.iclickhd.factions.utils.TextUtils;
 
@@ -55,10 +54,10 @@ public class FactionInfoCommand extends AbstractCommand {
 		Set<Text> onlineMembersName = new HashSet<Text>();
 		Set<Text> offlineMembersName = new HashSet<Text>();
 		for (FactionMember factionMember : faction.getMembers()) {
-			Optional<User> optionalUser = UserService.getUser(factionMember.getUniqueId());
+			Optional<User> optionalUser = getPlugin().getUserManager().getUser(factionMember.getUniqueId());
 			if (optionalUser.isPresent()) {
 				User user = optionalUser.get();
-				if (UserService.isUserOnline(user)) {
+				if (getPlugin().getUserManager().isUserOnline(user)) {
 					onlineMembersName.add(Text.of(user.getName()));
 				} else {
 					offlineMembersName.add(Text.of(user.getName()));
@@ -69,6 +68,7 @@ public class FactionInfoCommand extends AbstractCommand {
 		List<Text> contents = new ArrayList<Text>();
 		contents.add(Text.builder().append(Text.of("Online members (" + onlineMembersName.size() + ") : ")).append(TextUtils.join(onlineMembersName, Text.of(", "))).build());
 		contents.add(Text.builder().append(Text.of("Offline members (" + offlineMembersName.size() + ") : ")).append(TextUtils.join(offlineMembersName, Text.of(", "))).build());
+		contents.add(Text.of("Land / Power / Max power : " + faction.getClaims().size() + " / " + getPlugin().getFactionLogic().getFactionRoundedPower(faction.getUniqueId()) + " / " + getPlugin().getFactionLogic().getFactionRoundedMaxPower(faction.getUniqueId())));
 		PaginationList.builder().title(Text.of(TextColors.GOLD, TextColors.DARK_GREEN, faction.getName(), TextColors.GOLD)).contents(contents).padding(Text.of("=")).sendTo(source);
 	}
 }

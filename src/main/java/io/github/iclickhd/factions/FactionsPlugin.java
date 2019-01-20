@@ -1,6 +1,7 @@
 package io.github.iclickhd.factions;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +28,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
 import io.github.iclickhd.factions.caching.FactionsCache;
+import io.github.iclickhd.factions.caching.PlayersCache;
 import io.github.iclickhd.factions.commands.ClaimCommand;
 import io.github.iclickhd.factions.commands.CreateCommand;
 import io.github.iclickhd.factions.commands.FactionHelpCommand;
@@ -35,17 +37,27 @@ import io.github.iclickhd.factions.commands.FactionListCommand;
 import io.github.iclickhd.factions.commands.FactionRankDemote;
 import io.github.iclickhd.factions.commands.FactionRankPromote;
 import io.github.iclickhd.factions.commands.PlayerInfoCommand;
+import io.github.iclickhd.factions.commands.ReloadCommand;
+import io.github.iclickhd.factions.configs.AbstractConfig;
 import io.github.iclickhd.factions.configs.FactionConfig;
+import io.github.iclickhd.factions.configs.FactionSetting;
 import io.github.iclickhd.factions.configs.MainConfig;
+import io.github.iclickhd.factions.configs.PlayerConfig;
+import io.github.iclickhd.factions.listeners.PlayerJoinListener;
 import io.github.iclickhd.factions.listeners.PlayerMoveListener;
 import io.github.iclickhd.factions.logic.FactionLogic;
 import io.github.iclickhd.factions.logic.MainLogic;
+import io.github.iclickhd.factions.logic.PlayerLogic;
+import io.github.iclickhd.factions.managers.PowerManager;
+import io.github.iclickhd.factions.managers.UserManager;
 import io.github.iclickhd.factions.models.Faction;
 import io.github.iclickhd.factions.models.FactionClaim;
 import io.github.iclickhd.factions.models.FactionMember;
+import io.github.iclickhd.factions.models.FactionPlayer;
 import io.github.iclickhd.factions.parsers.FactionNameArgument;
 import io.github.iclickhd.factions.serializers.FactionClaimSerializer;
 import io.github.iclickhd.factions.serializers.FactionMemberSerializer;
+import io.github.iclickhd.factions.serializers.FactionPlayerSerializer;
 import io.github.iclickhd.factions.serializers.FactionSerializer;
 import io.github.iclickhd.factions.serializers.Vector3iSerializer;
 import io.github.iclickhd.factions.statictext.CommandArgumentKeys;
@@ -62,13 +74,20 @@ public class FactionsPlugin {
     @Inject
     @ConfigDir(sharedRoot = false)
     private Path configDir;
-    
+	
+	private MainConfig mainConfig;
+	private MainLogic mainLogic;
+	
 	private FactionConfig factionConfig;
 	private FactionsCache factionsCache;
 	private FactionLogic factionLogic;
 	
-	private MainConfig mainConfig;
-	private MainLogic mainLogic;
+	private PlayerConfig playerConfig;
+	private PlayersCache playersCache;
+	private PlayerLogic playerLogic;
+	
+	private UserManager userManager;
+	private PowerManager powerManager;
 
 	public static FactionsPlugin getPlugin() {
 		return plugin;
@@ -81,6 +100,15 @@ public class FactionsPlugin {
     public Path getConfigDir()
     {
         return configDir;
+    }
+    
+    public MainConfig getMainConfig() {
+    	return mainConfig;
+    }
+    
+    public MainLogic getMainLogic()
+    {
+        return mainLogic;
     }
     
     public FactionConfig getFactionConfig() {
@@ -96,13 +124,25 @@ public class FactionsPlugin {
         return factionLogic;
     }
     
-    public MainConfig getMainConfig() {
-    	return mainConfig;
+    public PlayerConfig getPlayerConfig() {
+    	return playerConfig;
     }
     
-    public MainLogic getMainLogic()
+    public PlayersCache getPlayersCache() {
+    	return playersCache;
+    }
+    
+    public PlayerLogic getPlayerLogic() {
+    	return playerLogic;
+    }
+    
+    public UserManager getUserManager() {
+    	return userManager;
+    }
+    
+    public PowerManager getPowerManager()
     {
-        return mainLogic;
+        return powerManager;
     }
     
 	@Listener
@@ -114,9 +154,11 @@ public class FactionsPlugin {
 	public void onInit(GameInitializationEvent event) {
 		factionCommands = new HashMap<List<String>, CommandSpec>();
 		factionsCache = new FactionsCache();
+		playersCache = new PlayersCache();
 		
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(Faction.class), new FactionSerializer());
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FactionMember.class), new FactionMemberSerializer());
+		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FactionPlayer.class), new FactionPlayerSerializer());
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(FactionClaim.class), new FactionClaimSerializer());
 		TypeSerializers.getDefaultSerializers().registerType(TypeToken.of(Vector3i.class), new Vector3iSerializer());
 		
@@ -136,11 +178,13 @@ public class FactionsPlugin {
 	}
 	
 	private void InitializeManagers() {
-
+		powerManager = new PowerManager();
+		userManager = new UserManager();
 	}
 
 	private void RegisterListeners() {
 		Sponge.getEventManager().registerListeners(this, new PlayerMoveListener());
+		Sponge.getEventManager().registerListeners(this, new PlayerJoinListener());
 	}
 
 	private void InitializeCommands() {
@@ -193,13 +237,18 @@ public class FactionsPlugin {
 				.executor(new ClaimCommand())
 				.build());
 		
-        CommandSpec commandNation = CommandSpec.builder()
+        factionCommands.put(Collections.singletonList("reload"), CommandSpec.builder()
+				.description(Text.of("Reload configuration"))
+				.permission("")
+				.executor(new ReloadCommand()).build());
+		
+        CommandSpec commandFaction = CommandSpec.builder()
 				.description(Text.of("Displays the list of faction command"))
                 .executor(new FactionHelpCommand("f", factionCommands))
                 .children(factionCommands)
                 .build();
 		
-		Sponge.getCommandManager().register(this, commandNation, "faction", "f");
+		Sponge.getCommandManager().register(this, commandFaction, "faction", "f");
 	}
 
 	private void SetupConfigs() {
@@ -212,7 +261,6 @@ public class FactionsPlugin {
             e.printStackTrace();
         }
 
-        // Create data directory for EagleFactions
         if (!Files.exists(configDir.resolve("data")))
         {
             try
@@ -224,20 +272,9 @@ public class FactionsPlugin {
                 e.printStackTrace();
             }
         }
-
-        if (!Files.exists(configDir.resolve("players")))
-        {
-            try
-            {
-                Files.createDirectories(configDir.resolve("players"));
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
         
         factionConfig = new FactionConfig(Paths.get(getConfigDir().resolve("data") + "/factions.conf"));
+        playerConfig = new PlayerConfig(Paths.get(getConfigDir().resolve("data") + "/players.conf"));
         mainConfig = new MainConfig(Paths.get(getConfigDir() + "/main.conf"));
 	}
 	
@@ -245,5 +282,25 @@ public class FactionsPlugin {
 	{
 		mainLogic = new MainLogic();
 		factionLogic = new FactionLogic();
+		playerLogic = new PlayerLogic();
+	}
+	
+	public void registerMappedConfig(AbstractConfig config, Class<?> mappedClass) {
+		if(mappedClass.isAnnotationPresent(FactionSetting.class)) {
+			for (Field field : config.getClass().getDeclaredFields()) {
+				if (field.isAnnotationPresent(FactionSetting.class)) {
+					FactionSetting factionSetting = field.getAnnotation(FactionSetting.class);
+					if (config.get().getNode((Object[]) factionSetting.path()).isVirtual()) {
+						try {
+							field.set(this, config.get().getNode((Object[]) factionSetting.path()).getValue());
+						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
+						} catch (IllegalAccessException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
 	}
 }

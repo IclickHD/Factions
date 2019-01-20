@@ -18,11 +18,17 @@ public class ClaimCommand extends AbstractCommand {
 			Player player = (Player)source;
 			Optional<Faction> optionalPlayerFaction = getPlugin().getFactionLogic().getFactionByPlayer(player);
 			if(optionalPlayerFaction.isPresent()) {
+				Faction playerFaction = optionalPlayerFaction.get();
 				Optional<Faction> optionalChunkFaction = getPlugin().getFactionLogic().getFactionByClaim(player.getWorld(), player.getLocation().getChunkPosition());
-				if(!optionalChunkFaction.isPresent()) {
-					getPlugin().getFactionLogic().claimChunk(optionalPlayerFaction.get(), player.getWorld(), player.getLocation().getChunkPosition());
+				if(optionalChunkFaction.isPresent()) {
+					Faction chunkFaction = optionalChunkFaction.get();
+					if(getPlugin().getFactionLogic().canOverClaim(playerFaction, chunkFaction)) {
+						getPlugin().getFactionLogic().claimChunk(playerFaction, player.getWorld(), player.getLocation().getChunkPosition());	
+					}
 				} else {
-					
+					if(getPlugin().getFactionLogic().canClaim(playerFaction)) {
+						getPlugin().getFactionLogic().claimChunk(playerFaction, player.getWorld(), player.getLocation().getChunkPosition());	
+					}
 				}
 			} else {
 				

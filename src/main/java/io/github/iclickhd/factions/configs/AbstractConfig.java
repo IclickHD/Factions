@@ -12,7 +12,7 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
-public abstract class AbstractConfig extends AbstractPluginObject implements IConfig {
+public abstract class AbstractConfig extends AbstractPluginObject {
 	protected Path configFile;
 	protected ConfigurationLoader<CommentedConfigurationNode> configLoader;
 	protected CommentedConfigurationNode configNode;
@@ -21,7 +21,6 @@ public abstract class AbstractConfig extends AbstractPluginObject implements ICo
 		this.configFile = configFile;
 		configLoader = HoconConfigurationLoader.builder()
 				.setPath(configFile).build();
-		setup();
 	}
 	
 	public void setup() {
@@ -53,6 +52,10 @@ public abstract class AbstractConfig extends AbstractPluginObject implements ICo
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void reload() {
+		load();
 	}
 	
 	public CommentedConfigurationNode get() {
